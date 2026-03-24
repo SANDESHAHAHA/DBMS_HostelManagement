@@ -14,32 +14,47 @@ import setupDb from './setup_db.js';
 dotenv.config();
 
 const app = express();
+// If running behind a proxy (Render, Vercel, etc.), enable trust proxy
+// so express-rate-limit can use the X-Forwarded-For header correctly.
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
 // Security Middlewares
 app.use(helmet());
 
-// CORS Configuration - Restrict to frontend origin
+// CORS Configuration - restrict to known frontends, allow Vercel subdomains
 const allowedOrigins = [
-  "https://dbms-hostel-management-dyc358y7p-sandeshahahas-projects.vercel.app/",
-    "http://localhost:5173",
+  'http://localhost:5173',
+  // you can add fixed production origins here if desired
 ];
 
 const corsOptions = {
-    origin: (origin, callback) => {
-        // Check if origin is allowed or if it's a server-to-server request (no origin)
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true)
-        } else {
-            console.log("Blocked by CORS. Origin:", origin); // Log blocked origins for debugging
-            callback(null, false) // Return false instead of error to avoid 500s
-        }
-    },
-    credentials: true,
-    optionsSuccessStatus: 200
-}
+  origin: (origin, callback) => {
+    // allow server-to-server requests (no origin)
+    if (!origin) return callback(null, true);
 
-app.use(cors(corsOptions))
+    // normalize origin (remove trailing slash)
+    const normalized = origin.replace(/\/+$/, '');
+
+    // allow exact matches in the whitelist
+    if (allowedOrigins.indexOf(normalized) !== -1) return callback(null, true);
+
+    // allow any Vercel preview or production domain ending with .vercel.app
+    try {
+      const parsed = new URL(normalized);
+      if (parsed.hostname && parsed.hostname.endsWith('.vercel.app')) return callback(null, true);
+    } catch (err) {
+      // fall through to block
+    }
+
+    console.log('Blocked by CORS. Origin:', origin);
+    return callback(null, false);
+  },
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
 
 
 app.use(express.json());
