@@ -6,3 +6,6 @@
 
 ### Create admin 
 #### For admin login create username / pw : admin/admin123
+
+## 🚀 Live Demo
+https://dbms-hostel-management-sspl.vercel.app
