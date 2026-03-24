@@ -26,7 +26,7 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-    origin: (origin: any, callback: any) => {
+    origin: (origin, callback) => {
         // Check if origin is allowed or if it's a server-to-server request (no origin)
         if (!origin || allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true)
