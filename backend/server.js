@@ -20,10 +20,27 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 
 // CORS Configuration - Restrict to frontend origin
-app.use(cors({
-  origin: ['https://dbms-hostel-management-sspl-76zeh50oc-sandeshahahas-projects.vercel.app/'],
-  credentials: true
-}));
+const allowedOrigins = [
+    "https://dbms-hostel-management-sspl-76zeh50oc-sandeshahahas-projects.vercel.app/",
+    "http://localhost:5173",
+];
+
+const corsOptions = {
+    origin: (origin: any, callback: any) => {
+        // Check if origin is allowed or if it's a server-to-server request (no origin)
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true)
+        } else {
+            console.log("Blocked by CORS. Origin:", origin); // Log blocked origins for debugging
+            callback(null, false) // Return false instead of error to avoid 500s
+        }
+    },
+    credentials: true,
+    optionsSuccessStatus: 200
+}
+
+app.use(cors(corsOptions))
+
 
 app.use(express.json());
 
