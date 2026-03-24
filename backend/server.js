@@ -25,7 +25,7 @@ app.use(helmet());
 // CORS Configuration - restrict to known frontends, allow Vercel subdomains
 const allowedOrigins = [
   'http://localhost:5173',
-  // you can add fixed production origins here if desired
+  "https://dbms-hostel-management-j2w3.vercel.app/"  
 ];
 
 const corsOptions = {
