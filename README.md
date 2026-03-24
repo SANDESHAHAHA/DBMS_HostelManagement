@@ -8,4 +8,4 @@
 #### For admin login create username / pw : admin/admin123
 
 ## 🚀 Live Demo
-### https://dbms-hostel-management-jvw58f7jw-sandeshahahas-projects.vercel.app/
+##### [https://dbms-hostel-management-jvw58f7jw-sandeshahahas-projects.vercel.app/](https://dbms-hostel-management-j2w3.vercel.app/)
