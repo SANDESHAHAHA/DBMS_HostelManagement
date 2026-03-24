@@ -21,7 +21,7 @@ app.use(helmet());
 
 // CORS Configuration - Restrict to frontend origin
 const allowedOrigins = [
-    "https://dbms-hostel-management-sspl-76zeh50oc-sandeshahahas-projects.vercel.app/",
+  "https://dbms-hostel-management-sspl-76zeh50oc-sandeshahahas-projects.vercel.app",
     "http://localhost:5173",
 ];
 
