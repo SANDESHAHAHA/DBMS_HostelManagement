@@ -160,7 +160,7 @@ const Payments: React.FC = () => {
                                         setEditStudent(pay.student_id);
                                         setEditDate(new Date(pay.date).toISOString().substring(0, 10));
                                         setShowEditModal(true);
-                                    }} className="text-secondary-foreground font-semibold text-sm hover:underline highlight">Edit</button>
+                                    }} className="text-foreground font-semibold text-sm hover:underline highlight">Edit</button>
 
                                     <AlertDialog>
                                         <AlertDialogTrigger>

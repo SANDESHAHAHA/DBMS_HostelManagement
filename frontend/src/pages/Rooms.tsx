@@ -146,10 +146,10 @@ const Rooms: React.FC = () => {
                                         <span className="px-3 py-1.5 text-xs font-bold rounded-lg bg-primary/10 text-primary border border-primary/20 inline-block">Available</span>}
                                 </td>
                                 <td className="px-5 py-4 text-right space-x-3">
-                                    <button onClick={() => { setSelectedRoom(room); setEditRoomNumber(room.room_number); setEditCapacity(room.capacity); setShowEditModal(true); }} className="text-secondary-foreground font-semibold text-sm hover:underline highlight">Edit</button>
+                                    <button onClick={() => { setSelectedRoom(room); setEditRoomNumber(room.room_number); setEditCapacity(room.capacity); setShowEditModal(true); }} className="text-foreground font-semibold text-sm hover:underline highlight">Edit</button>
                                     
                                     <AlertDialog>
-                                        <AlertDialogTrigger asChild>
+                                        <AlertDialogTrigger>
                                             <button className="text-destructive font-semibold text-sm hover:underline">Delete</button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent className="bg-card/90 backdrop-blur-2xl border-border/60 rounded-[2rem] shadow-2xl sm:max-w-md">

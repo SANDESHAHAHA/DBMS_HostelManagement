@@ -138,7 +138,7 @@ const Students: React.FC = () => {
                                         <span className="px-3 py-1.5 text-xs font-bold rounded-lg bg-secondary/10 text-primary border border-secondary/20 inline-block">Unassigned</span>}
                                 </td>
                                 <td className="px-5 py-4 text-right space-x-3">
-                                    <button onClick={() => { setSelectedStudent(student); setEditName(student.name); setEditContact(student.contact || ''); setShowEditModal(true); }} className="text-secondary-foreground font-semibold text-sm hover:underline highlight">Edit</button>
+                                    <button onClick={() => { setSelectedStudent(student); setEditName(student.name); setEditContact(student.contact || ''); setShowEditModal(true); }} className="text-foreground font-semibold text-sm hover:underline highlight">Edit</button>
 
                                     <AlertDialog>
                                         <AlertDialogTrigger>
