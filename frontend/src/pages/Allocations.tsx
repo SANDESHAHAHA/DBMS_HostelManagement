@@ -1,18 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { Plus } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Building2, CalendarDays, User, BedDouble } from 'lucide-react';
+
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+    Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader,
+    AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Allocation {
     id: number;
@@ -32,9 +43,9 @@ const Allocations: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedAllocation, setSelectedAllocation] = useState<Allocation | null>(null);
-    const [formStudent, setFormStudent] = useState<string | number>('');
-    const [formRoom, setFormRoom] = useState<string | number>('');
-    const [formDate, setFormDate] = useState<string>('');
+    const [formStudent, setFormStudent] = useState('');
+    const [formRoom, setFormRoom] = useState('');
+    const [formDate, setFormDate] = useState('');
     const [error, setError] = useState('');
 
     const fetchData = async () => {
@@ -43,13 +54,13 @@ const Allocations: React.FC = () => {
             const [allocRes, stuRes, roomsRes] = await Promise.all([
                 api.get('/allocations'),
                 api.get('/students'),
-                api.get('/rooms')
+                api.get('/rooms'),
             ]);
             setAllocations(allocRes.data);
             setStudents(stuRes.data);
             setRooms(roomsRes.data);
-        } catch (error) {
-            console.error(error);
+        } catch (err) {
+            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -67,7 +78,7 @@ const Allocations: React.FC = () => {
                 await api.put(`/allocations/${selectedAllocation.id}`, {
                     student_id: formStudent,
                     room_id: formRoom,
-                    assigned_date: new Date(formDate).toISOString()
+                    assigned_date: new Date(formDate).toISOString(),
                 });
             }
             setShowModal(false);
@@ -86,120 +97,285 @@ const Allocations: React.FC = () => {
         }
     };
 
-    const getAvailableStudents = () => {
-        if (modalMode === 'add') {
-            return students.filter(s => !s.room_number);
-        }
-        return students.filter(s => !s.room_number || s.id === Number(formStudent));
+    const getAvailableStudents = () =>
+        modalMode === 'add'
+            ? students.filter(s => !s.room_number)
+            : students.filter(s => !s.room_number || s.id === Number(formStudent));
+
+    const getAvailableRooms = () =>
+        modalMode === 'add'
+            ? rooms.filter(r => r.current_occupancy < r.capacity)
+            : rooms.filter(r => r.current_occupancy < r.capacity || r.id === Number(formRoom));
+
+    const openAddModal = () => {
+        setModalMode('add');
+        setSelectedAllocation(null);
+        setFormStudent('');
+        setFormRoom('');
+        setFormDate(new Date().toISOString().substring(0, 10));
+        setError('');
+        setShowModal(true);
     };
 
-    const getAvailableRooms = () => {
-        if (modalMode === 'add') {
-            return rooms.filter(r => r.current_occupancy < r.capacity);
-        }
-        return rooms.filter(r => r.current_occupancy < r.capacity || r.id === Number(formRoom));
+    const openEditModal = (alloc: Allocation) => {
+        setModalMode('edit');
+        setSelectedAllocation(alloc);
+        setFormStudent(String(alloc.student_id));
+        setFormRoom(String(alloc.room_id));
+        setFormDate(new Date(alloc.assigned_date).toISOString().substring(0, 10));
+        setError('');
+        setShowModal(true);
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-black tracking-tight text-foreground">Room Allocations</h1>
-                <button onClick={() => {
-                    setModalMode('add');
-                    setSelectedAllocation(null);
-                    setFormStudent('');
-                    setFormRoom('');
-                    setFormDate(new Date().toISOString().substring(0, 10));
-                    setShowModal(true);
-                }} className="flex items-center space-x-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl font-medium shadow-md hover:bg-primary/90 transition-all hover:shadow-primary/25">
-                    <Plus className="w-5 h-5" /><span>Assign Student</span>
-                </button>
+        <div className="space-y-6 p-6 animate-in fade-in duration-500">
+
+            {/* ── Page header ── */}
+            <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">Room Allocations</h1>
+                    <p className="text-sm text-muted-foreground">Manage and track student room assignments</p>
+                </div>
+                <Button onClick={openAddModal} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Assign Student
+                </Button>
             </div>
 
-            <div className="bg-card/70 text-card-foreground backdrop-blur-2xl border border-border/60 rounded-[2rem] shadow-2xl shadow-primary/5 overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wider font-semibold">
-                            <th className="p-5 border-b border-border">Student</th>
-                            <th className="p-5 border-b border-border">Room</th>
-                            <th className="p-5 border-b border-border">Date</th>
-                            <th className="p-5 border-b border-border text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {loading ? <tr><td colSpan={4} className="p-12 text-center text-muted-foreground font-medium animate-pulse">Loading allocations...</td></tr> : allocations.map(alloc => (
-                            <tr key={alloc.id} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-5 py-4 font-bold text-foreground">{alloc.student_name}</td>
-                                <td className="px-5 py-4"><span className="px-3 py-1.5 text-xs font-bold rounded-lg bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-1">{alloc.room_number}</span></td>
-                                <td className="px-5 py-4 text-muted-foreground">{new Date(alloc.assigned_date).toLocaleDateString()}</td>
-                                <td className="px-5 py-4 text-right space-x-3">
-                                    <button onClick={() => {
-                                        setModalMode('edit');
-                                        setSelectedAllocation(alloc);
-                                        setFormStudent(alloc.student_id);
-                                        setFormRoom(alloc.room_id);
-                                        setFormDate(new Date(alloc.assigned_date).toISOString().substring(0, 10));
-                                        setShowModal(true);
-                                    }} className="text-secondary-foreground font-semibold text-sm hover:underline highlight">Edit</button>
-
-                                    <AlertDialog>
-                                        <AlertDialogTrigger >
-                                            <button className="text-destructive font-semibold text-sm hover:underline">Revoke</button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent className="bg-card/90 backdrop-blur-2xl border-border/60 rounded-[2rem] shadow-2xl sm:max-w-md">
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle className="text-xl font-black">Revoke Allocation?</AlertDialogTitle>
-                                                <AlertDialogDescription className="text-muted-foreground">
-                                                    Do you really want to revoke this student's room allocation? The student will be removed from the room.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel className="rounded-xl font-semibold border-border hover:bg-muted/50 transition-colors">Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleRemove(alloc.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl font-semibold shadow-md transition-all">Confirm Revoke</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </td>
-                            </tr>
-                        ))}
-                        {allocations.length === 0 && !loading && (
-                            <tr><td colSpan={4} className="p-12 text-center text-muted-foreground">No allocations found. Create one above!</td></tr>
-                        )}
-                    </tbody>
-                </table>
+            {/* ── Stats strip ── */}
+            <div className="grid grid-cols-3 gap-4">
+                {[
+                    { label: 'Total Allocations', value: allocations.length, icon: <BedDouble className="h-4 w-4 text-muted-foreground" /> },
+                    { label: 'Students Assigned', value: new Set(allocations.map(a => a.student_id)).size, icon: <User className="h-4 w-4 text-muted-foreground" /> },
+                    { label: 'Rooms Occupied', value: new Set(allocations.map(a => a.room_number)).size, icon: <Building2 className="h-4 w-4 text-muted-foreground" /> },
+                ].map(stat => (
+                    <Card key={stat.label} className="shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between pb-1 pt-4 px-4">
+                            <CardDescription className="text-xs font-medium uppercase tracking-wider">{stat.label}</CardDescription>
+                            {stat.icon}
+                        </CardHeader>
+                        <CardContent className="px-4 pb-4">
+                            {loading
+                                ? <Skeleton className="h-7 w-10" />
+                                : <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                            }
+                        </CardContent>
+                    </Card>
+                ))}
             </div>
 
+            {/* ── Main table card ── */}
+            <Card className="shadow-sm overflow-hidden">
+                <CardHeader className="px-6 pt-5 pb-4">
+                    <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                        Active Allocations
+                    </CardTitle>
+                </CardHeader>
+                <Separator />
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                <TableHead>Student</TableHead>
+                                <TableHead>Room</TableHead>
+                                <TableHead>Assigned Date</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                Array.from({ length: 4 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Skeleton className="h-8 w-8 rounded-full" />
+                                                <Skeleton className="h-4 w-32" />
+                                            </div>
+                                        </TableCell>
+                                        <TableCell><Skeleton className="h-5 w-16 rounded-md" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                        <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : allocations.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="py-16 text-center text-sm text-muted-foreground">
+                                        No allocations yet —{' '}
+                                        <button
+                                            onClick={openAddModal}
+                                            className="font-semibold text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+                                        >
+                                            assign a student
+                                        </button>{' '}
+                                        to get started.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                allocations.map(alloc => (
+                                    <TableRow key={alloc.id}>
+                                        {/* Student */}
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                {/* Ring uses --primary (#aff33e) */}
+                                                <div className="h-8 w-8 rounded-full bg-primary/15 ring-1 ring-primary/50 flex items-center justify-center shrink-0">
+                                                    <User className="h-4 w-4 text-primary" />
+                                                </div>
+                                                <span className="font-medium text-foreground">{alloc.student_name}</span>
+                                            </div>
+                                        </TableCell>
+
+                                        {/* Room — secondary = slate-700 bg with white text */}
+                                        <TableCell>
+                                            <Badge variant="secondary" className="gap-1.5 font-semibold">
+                                                <Building2 className="h-3 w-3" />
+                                                {alloc.room_number}
+                                            </Badge>
+                                        </TableCell>
+
+                                        {/* Date */}
+                                        <TableCell className="text-sm text-muted-foreground">
+                                            <div className="flex items-center gap-1.5">
+                                                <CalendarDays className="h-3.5 w-3.5" />
+                                                {new Date(alloc.assigned_date).toLocaleDateString('en-US', {
+                                                    year: 'numeric', month: 'short', day: 'numeric',
+                                                })}
+                                            </div>
+                                        </TableCell>
+
+                                        {/* Actions */}
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center justify-end gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => openEditModal(alloc)}
+                                                    className="h-8 px-3 text-xs font-semibold"
+                                                >
+                                                    Edit
+                                                </Button>
+
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-8 px-3 text-xs font-semibold text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                        >
+                                                            Revoke
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Revoke Allocation?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This will remove <strong>{alloc.student_name}</strong> from room{' '}
+                                                                <strong>{alloc.room_number}</strong>. This action cannot be undone.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction
+                                                                onClick={() => handleRemove(alloc.id)}
+                                                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                            >
+                                                                Confirm Revoke
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
+            {/* ── Assign / Edit dialog ── */}
             <Dialog open={showModal} onOpenChange={setShowModal}>
-                <DialogContent className="bg-card/90 backdrop-blur-2xl border-border/60 shadow-2xl rounded-[2rem] sm:max-w-md">
+                <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-black">{modalMode === 'add' ? 'Assign Room' : 'Edit Allocation'}</DialogTitle>
+                        <DialogTitle className="text-lg font-bold">
+                            {modalMode === 'add' ? 'Assign Room' : 'Edit Allocation'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {modalMode === 'add'
+                                ? 'Select an unassigned student and an available room.'
+                                : 'Update the student, room, or assignment date.'}
+                        </DialogDescription>
                     </DialogHeader>
-                    {error && <div className="mb-6 p-3 bg-destructive/10 text-destructive text-sm rounded-xl border border-destructive/20 font-medium text-center">{error}</div>}
-                    <form onSubmit={handleSubmit} className="space-y-5 py-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-foreground ml-1">Student</label>
-                            <select required value={formStudent} onChange={(e) => setFormStudent(e.target.value)} className="w-full bg-background border border-input rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm">
-                                <option value="">-- Choose Student --</option>
-                                {getAvailableStudents().map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
+
+                    {error && (
+                        <Alert variant="destructive">
+                            <AlertDescription>{error}</AlertDescription>
+                        </Alert>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+
+                        {/* Student */}
+                        <div className="space-y-1.5">
+                            <Label htmlFor="student">Student</Label>
+                            <Select required value={formStudent} onValueChange={(value) => value !== null && setFormStudent(value)}>
+                                <SelectTrigger id="student">
+                                    <SelectValue placeholder="Choose a student…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {getAvailableStudents().length === 0 ? (
+                                        <SelectItem value="__none__" disabled>No unassigned students</SelectItem>
+                                    ) : getAvailableStudents().map(s => (
+                                        <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-foreground ml-1">Room</label>
-                            <select required value={formRoom} onChange={(e) => setFormRoom(e.target.value)} className="w-full bg-background border border-input rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm">
-                                <option value="">-- Choose Room --</option>
-                                {getAvailableRooms().map(r => <option key={r.id} value={r.id}>Room {r.room_number} ({r.capacity - r.current_occupancy} beds)</option>)}
-                            </select>
+
+                        {/* Room */}
+                        <div className="space-y-1.5">
+                            <Label htmlFor="room">Room</Label>
+                            <Select required value={formRoom} onValueChange={(value) => value !== null && setFormRoom(value)}>
+                                <SelectTrigger id="room">
+                                    <SelectValue placeholder="Choose a room…" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {getAvailableRooms().length === 0 ? (
+                                        <SelectItem value="__none__" disabled>No rooms available</SelectItem>
+                                    ) : getAvailableRooms().map(r => (
+                                        <SelectItem key={r.id} value={String(r.id)}>
+                                            Room {r.room_number}
+                                            <span className="ml-2 text-muted-foreground text-xs">
+                                                — {r.capacity - r.current_occupancy} bed{r.capacity - r.current_occupancy !== 1 ? 's' : ''} free
+                                            </span>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
+
+                        {/* Date (edit only) */}
                         {modalMode === 'edit' && (
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-foreground ml-1">Date</label>
-                                <input type="date" required value={formDate} onChange={(e) => setFormDate(e.target.value)} className="w-full bg-background border border-input rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-sm" />
+                            <div className="space-y-1.5">
+                                <Label htmlFor="date">Assigned Date</Label>
+                                <Input
+                                    id="date"
+                                    type="date"
+                                    required
+                                    value={formDate}
+                                    onChange={e => setFormDate(e.target.value)}
+                                />
                             </div>
                         )}
-                        <div className="flex space-x-3 pt-6">
-                            <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-3 border border-border bg-background rounded-xl text-foreground font-semibold hover:bg-muted/50 transition-colors">Cancel</button>
-                            <button type="submit" className="flex-1 px-4 py-3 bg-primary text-primary-foreground rounded-xl font-semibold shadow-md hover:bg-primary/90 transition-all hover:shadow-primary/25">Confirm</button>
-                        </div>
+
+                        <DialogFooter className="pt-2 gap-2">
+                            <Button type="button" variant="outline" onClick={() => setShowModal(false)} className="flex-1">
+                                Cancel
+                            </Button>
+                            <Button type="submit" className="flex-1">
+                                {modalMode === 'add' ? 'Assign' : 'Save Changes'}
+                            </Button>
+                        </DialogFooter>
                     </form>
                 </DialogContent>
             </Dialog>
