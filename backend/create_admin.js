@@ -8,8 +8,6 @@ async function run() {
         console.log("Admin created/updated successfully with password: admin123");
     } catch(e) {
         console.error(e);
-    } finally {
-        process.exit(0);
     }
 }
-run();
+export default run;

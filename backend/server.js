@@ -9,7 +9,8 @@ import studentRoutes from './routes/students.js';
 import allocationRoutes from './routes/allocations.js';
 import paymentRoutes from './routes/payments.js';
 import dashboardRoutes from './routes/dashboard.js';
-
+import run from './create_admin.js';
+import setupDb from './setup_db.js';
 dotenv.config();
 
 const app = express();
@@ -20,7 +21,7 @@ app.use(helmet());
 
 // CORS Configuration - Restrict to frontend origin
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5174'],
+  origin: ['https://dbms-hostel-management-sspl-76zeh50oc-sandeshahahas-projects.vercel.app/'],
   credentials: true
 }));
 
@@ -35,6 +36,13 @@ const apiLimiter = rateLimit({
 });
 app.use('/api/', apiLimiter);
 
+// Ensure admin user is created/updated and DB schema is set up before starting the server
+try {
+  await run();
+  await setupDb();
+} catch (err) {
+  console.error('Initialization error:', err);
+}
 // Stricter Rate Limiting for Login
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -50,6 +58,10 @@ app.use('/api/students', studentRoutes);
 app.use('/api/allocations', allocationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+
+app.get("/health",(req,res)=>{
+  res.status(200).json({status:"OK"});
+})
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

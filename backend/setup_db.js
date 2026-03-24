@@ -25,11 +25,9 @@ const setupDb = async () => {
         }
 
         console.log('Database setup complete!');
-        process.exit();
     } catch (error) {
         console.error('Error setting up DB:', error);
-        process.exit(1);
     }
 };
 
-setupDb();
+export default setupDb;
